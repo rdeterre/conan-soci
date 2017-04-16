@@ -4,7 +4,7 @@ import os
 class SOCIConan(ConanFile):
     name = "soci"
     description = "The C++ Database Access Library"
-    version = "3.2.3"
+    version = "646efa0"
     license = "BSL"
     depends = "Boost/1.62.0@memsharded/testing"
     url = "https://github.com/SOCI/soci"
@@ -44,12 +44,9 @@ class SOCIConan(ConanFile):
             self.requires("sqlite3/3.14.1@rdeterre/stable")
 
     def source(self):
-        tools.download("https://github.com/SOCI/soci/archive/{}.zip".format(
-            self.version), "soci.zip")
-        tools.unzip("soci.zip")
-        os.unlink("soci.zip")
-        os.rename("soci-{}".format(self.version), "soci")
-        tools.replace_in_file("soci/src/CMakeLists.txt",
+        self.run("git clone https://github.com/SOCI/soci")
+        self.run("cd soci && git checkout {}".format(self.version))
+        tools.replace_in_file("soci/CMakeLists.txt",
                               "project(SOCI)", """project(SOCI)
         include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
         conan_basic_setup()""")
@@ -67,26 +64,27 @@ class SOCIConan(ConanFile):
         flags.append("-DWITH_POSTGRESQL=ON" if self.options.PostgreSQL else "-DWITH_POSTGRESQL=OFF")
         flags.append("-DWITH_SQLITE3=ON" if self.options.SQLite3 else "-DWITH_SQLITE3=OFF")
         flags.append("-DSOCI_TESTS=OFF")
-        self.run('cmake soci/src %s %s' % (cmake.command_line, " ".join(flags)))
+        self.run('cmake soci %s %s' % (cmake.command_line, " ".join(flags)))
         self.run("cmake --build . %s" % cmake.build_config)
 
     def package(self):
-        self.copy("*.h", dst="include/soci", src="soci/src/core")
-        self.copy("soci-empty.h", dst="include/soci", src="soci/src/backends/empty")
+        self.copy("*.h", dst="include/soci", src="soci/include/soci")
+        self.copy("*.h", dst="include/soci", src="include/soci")
+        self.copy("soci-empty.h", dst="include/soci", src="soci/include/soci/empty")
         if self.options.DB2:
-            self.copy("soci-db2.h", dst="include/soci", src="soci/src/backends/db2")
+            self.copy("soci-db2.h", dst="include/soci", src="soci/include/soci/db2")
         if self.options.Firebird:
-            self.copy("soci-firebird.h", dst="include/soci", src="soci/src/backends/firebird")
+            self.copy("soci-firebird.h", dst="include/soci", src="soci/include/soci/firebird")
         if self.options.MySQL:
-            self.copy("soci-mysql.h", dst="include/soci", src="soci/src/backends/mysql")
+            self.copy("soci-mysql.h", dst="include/soci", src="soci/include/soci/mysql")
         if self.options.ODBC:
-            self.copy("soci-odbc.h", dst="include/soci", src="soci/src/backends/odbc")
+            self.copy("soci-odbc.h", dst="include/soci", src="soci/include/soci/odbc")
         if self.options.Oracle:
-            self.copy("soci-oracle.h", dst="include/soci", src="soci/src/backends/oracle")
+            self.copy("soci-oracle.h", dst="include/soci", src="soci/include/soci/oracle")
         if self.options.PostgreSQL:
-            self.copy("soci-postgresql.h", dst="include/soci", src="soci/src/backends/postgresql")
+            self.copy("soci-postgresql.h", dst="include/soci", src="soci/include/soci/postgresql")
         if self.options.SQLite3:
-            self.copy("soci-sqlite3.h", dst="include/soci", src="soci/src/backends/sqlite3")
+            self.copy("soci-sqlite3.h", dst="include/soci", src="soci/include/soci/sqlite3")
         self.copy("*.lib", dst="lib", keep_path=False)
         self.copy("*.dll", dst="bin", keep_path=False)
         self.copy("*.so", dst="lib", keep_path=False)
