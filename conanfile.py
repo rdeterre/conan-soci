@@ -16,7 +16,7 @@ class SOCIConan(ConanFile):
                "ODBC": [True, False],
                "Oracle": [True, False],
                "PostgreSQL": [True, False],
-               "SQLite": [True, False]}
+               "SQLite3": [True, False]}
     default_options = "shared=False", \
                       "DB2=False", \
                       "Firebird=False", \
@@ -24,7 +24,7 @@ class SOCIConan(ConanFile):
                       "ODBC=False", \
                       "Oracle=False", \
                       "PostgreSQL=False", \
-                      "SQLite=True"
+                      "SQLite3=True"
     generators = "cmake"
 
     def requirements(self):
@@ -40,7 +40,7 @@ class SOCIConan(ConanFile):
             assert False, "Oracle not supported yet"
         if self.options.PostgreSQL:
             assert False, "PostgreSQL not supported yet"
-        if self.options.SQLite:
+        if self.options.SQLite3:
             self.requires("sqlite3/3.14.1@rdeterre/stable")
 
     def source(self):
@@ -65,13 +65,28 @@ class SOCIConan(ConanFile):
         flags.append("-DWITH_ODBC=ON" if self.options.ODBC else "-DWITH_ODBC=OFF")
         flags.append("-DWITH_ORACLE=ON" if self.options.Oracle else "-DWITH_ORACLE=OFF")
         flags.append("-DWITH_POSTGRESQL=ON" if self.options.PostgreSQL else "-DWITH_POSTGRESQL=OFF")
-        flags.append("-DWITH_SQLITE=ON" if self.options.SQLite else "-DWITH_SQLITE=OFF")
+        flags.append("-DWITH_SQLITE3=ON" if self.options.SQLite3 else "-DWITH_SQLITE3=OFF")
         flags.append("-DSOCI_TESTS=OFF")
         self.run('cmake soci/src %s %s' % (cmake.command_line, " ".join(flags)))
         self.run("cmake --build . %s" % cmake.build_config)
 
     def package(self):
         self.copy("*.h", dst="include/soci", src="soci/src/core")
+        self.copy("soci-empty.h", dst="include/soci", src="soci/src/backends/empty")
+        if self.options.DB2:
+            self.copy("soci-db2.h", dst="include/soci", src="soci/src/backends/db2")
+        if self.options.Firebird:
+            self.copy("soci-firebird.h", dst="include/soci", src="soci/src/backends/firebird")
+        if self.options.MySQL:
+            self.copy("soci-mysql.h", dst="include/soci", src="soci/src/backends/mysql")
+        if self.options.ODBC:
+            self.copy("soci-odbc.h", dst="include/soci", src="soci/src/backends/odbc")
+        if self.options.Oracle:
+            self.copy("soci-oracle.h", dst="include/soci", src="soci/src/backends/oracle")
+        if self.options.PostgreSQL:
+            self.copy("soci-postgresql.h", dst="include/soci", src="soci/src/backends/postgresql")
+        if self.options.SQLite3:
+            self.copy("soci-sqlite3.h", dst="include/soci", src="soci/src/backends/sqlite3")
         self.copy("*.lib", dst="lib", keep_path=False)
         self.copy("*.dll", dst="bin", keep_path=False)
         self.copy("*.so", dst="lib", keep_path=False)
@@ -92,5 +107,5 @@ class SOCIConan(ConanFile):
             self.cpp_info.libs.append("soci_oracle")
         if self.options.PostgreSQL:
             self.cpp_info.libs.append("soci_postgresql")
-        if self.options.SQLite:
-            self.cpp_info.libs.append("soci_sqlite")
+        if self.options.SQLite3:
+            self.cpp_info.libs.append("soci_sqlite3")
